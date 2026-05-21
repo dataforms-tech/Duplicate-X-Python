@@ -52,7 +52,9 @@ def iter_files(
     if progress:
         progress.update(f"Walking: {root}")
 
-    for dirpath, dirnames, filenames in os.walk(root, topdown=True, followlinks=follow_symlinks):
+    for dirpath, dirnames, filenames in os.walk(
+        root, topdown=True, followlinks=follow_symlinks
+    ):
         dir_path = Path(dirpath)
         if not include_hidden:
             dirnames[:] = [d for d in dirnames if not d.startswith(".")]
@@ -71,7 +73,9 @@ def iter_files(
             path = dir_path / name
             if not include_hidden and _is_hidden_path(path.relative_to(root)):
                 continue
-            if exclude_globs and any(fnmatch(str(path), pattern) for pattern in exclude_globs):
+            if exclude_globs and any(
+                fnmatch(str(path), pattern) for pattern in exclude_globs
+            ):
                 continue
 
             try:
@@ -157,7 +161,9 @@ def scan_duplicates(
         files.append(path)
 
     if progress:
-        progress.update(f"Collected {len(files)} candidate files (out of {total_files})", force=True)
+        progress.update(
+            f"Collected {len(files)} candidate files (out of {total_files})", force=True
+        )
 
     by_size: Dict[int, List[Path]] = {}
     for path in files:
@@ -210,7 +216,9 @@ def scan_duplicates(
     full_groups: Dict[str, List[Path]] = {}
     full_size: Dict[str, int] = {}
 
-    candidates_list: List[Path] = [p for paths in quick_candidates.values() for p in paths]
+    candidates_list: List[Path] = [
+        p for paths in quick_candidates.values() for p in paths
+    ]
     with ThreadPoolExecutor(max_workers=max(1, options.workers)) as ex:
         futs = {ex.submit(_safe_full, p): p for p in candidates_list}
         done = 0
@@ -231,8 +239,12 @@ def scan_duplicates(
                 except OSError:
                     full_size[digest] = 0
 
-    duplicates = [(digest, paths) for digest, paths in full_groups.items() if len(paths) > 1]
-    duplicates.sort(key=lambda item: (-len(item[1]), -full_size.get(item[0], 0), item[0]))
+    duplicates = [
+        (digest, paths) for digest, paths in full_groups.items() if len(paths) > 1
+    ]
+    duplicates.sort(
+        key=lambda item: (-len(item[1]), -full_size.get(item[0], 0), item[0])
+    )
 
     groups: List[DuplicateGroup] = []
     for idx, (digest, paths) in enumerate(duplicates, start=1):
@@ -243,7 +255,9 @@ def scan_duplicates(
             except OSError as exc:
                 errors.append(f"stat failed for {p}: {exc}")
         size = full_size.get(digest, entries[0].size if entries else 0)
-        groups.append(DuplicateGroup(group_id=idx, size=size, sha256=digest, files=entries))
+        groups.append(
+            DuplicateGroup(group_id=idx, size=size, sha256=digest, files=entries)
+        )
 
     if progress:
         progress.done(f"Found {len(groups)} duplicate groups.")
@@ -264,7 +278,9 @@ def scan_duplicates(
 
 def save_scan_json(result: ScanResult, output: Path) -> None:
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(result.to_json(), indent=2, sort_keys=True), encoding="utf-8")
+    output.write_text(
+        json.dumps(result.to_json(), indent=2, sort_keys=True), encoding="utf-8"
+    )
 
 
 def load_scan_json(path: Path) -> ScanResult:

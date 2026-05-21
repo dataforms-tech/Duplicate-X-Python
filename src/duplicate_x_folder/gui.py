@@ -29,17 +29,25 @@ class App(tk.Tk):
         top.pack(fill="x")
 
         ttk.Label(top, text="Folder:").pack(side="left")
-        ttk.Entry(top, textvariable=self.root_var, width=80).pack(side="left", padx=8, fill="x", expand=True)
+        ttk.Entry(top, textvariable=self.root_var, width=80).pack(
+            side="left", padx=8, fill="x", expand=True
+        )
         ttk.Button(top, text="Browse…", command=self._browse).pack(side="left")
 
         opts = ttk.Frame(self, padding=(10, 0))
         opts.pack(fill="x")
-        ttk.Checkbutton(opts, text="Include hidden", variable=self.include_hidden_var).pack(side="left")
+        ttk.Checkbutton(
+            opts, text="Include hidden", variable=self.include_hidden_var
+        ).pack(side="left")
         ttk.Label(opts, text="Min size (bytes):").pack(side="left", padx=(16, 4))
         ttk.Entry(opts, textvariable=self.min_size_var, width=10).pack(side="left")
         ttk.Button(opts, text="Scan", command=self._scan).pack(side="left", padx=12)
-        ttk.Button(opts, text="Export JSON…", command=self._export_json).pack(side="left")
-        ttk.Button(opts, text="Quarantine duplicates (keep 1)", command=self._quarantine).pack(side="left", padx=12)
+        ttk.Button(opts, text="Export JSON…", command=self._export_json).pack(
+            side="left"
+        )
+        ttk.Button(
+            opts, text="Quarantine duplicates (keep 1)", command=self._quarantine
+        ).pack(side="left", padx=12)
 
         self.progress = ttk.Progressbar(self, mode="indeterminate")
         self.progress.pack(fill="x", padx=10, pady=(8, 0))
@@ -57,7 +65,9 @@ class App(tk.Tk):
         status.pack(fill="x", padx=10, pady=(0, 10))
 
     def _browse(self) -> None:
-        folder = filedialog.askdirectory(initialdir=self.root_var.get() or str(Path.home()))
+        folder = filedialog.askdirectory(
+            initialdir=self.root_var.get() or str(Path.home())
+        )
         if folder:
             self.root_var.set(folder)
 
@@ -80,7 +90,11 @@ class App(tk.Tk):
 
         def worker() -> None:
             try:
-                opts = ScanOptions(min_size_bytes=min_size, include_hidden=self.include_hidden_var.get(), workers=4)
+                opts = ScanOptions(
+                    min_size_bytes=min_size,
+                    include_hidden=self.include_hidden_var.get(),
+                    workers=4,
+                )
                 result = scan_duplicates(root, options=opts, progress=None)
                 self.last_result = result
                 self.after(0, lambda: self._render_result(result))
@@ -98,9 +112,16 @@ class App(tk.Tk):
             return
 
         for group in result.duplicate_groups:
-            group_id = self.tree.insert("", "end", text=f"Group {group.group_id}", values=(group.size, f"{len(group.files)} files"))
+            group_id = self.tree.insert(
+                "",
+                "end",
+                text=f"Group {group.group_id}",
+                values=(group.size, f"{len(group.files)} files"),
+            )
             for i, f in enumerate(group.files):
-                self.tree.insert(group_id, "end", text=f"[{i}]", values=(f.size, f.path))
+                self.tree.insert(
+                    group_id, "end", text=f"[{i}]", values=(f.size, f.path)
+                )
             self.tree.item(group_id, open=True)
         self.status_var.set(f"Found {len(result.duplicate_groups)} duplicate group(s).")
 
@@ -108,7 +129,9 @@ class App(tk.Tk):
         if not self.last_result:
             messagebox.showinfo("Nothing to export", "Run a scan first.")
             return
-        out = filedialog.asksaveasfilename(defaultextension=".json", filetypes=[("JSON", "*.json")])
+        out = filedialog.asksaveasfilename(
+            defaultextension=".json", filetypes=[("JSON", "*.json")]
+        )
         if not out:
             return
         save_scan_json(self.last_result, Path(out))
@@ -121,11 +144,15 @@ class App(tk.Tk):
         if not self.last_result.duplicate_groups:
             messagebox.showinfo("No duplicates", "No duplicates found.")
             return
-        if not messagebox.askyesno("Confirm", "Move duplicates to quarantine (keeping one per group)?"):
+        if not messagebox.askyesno(
+            "Confirm", "Move duplicates to quarantine (keeping one per group)?"
+        ):
             return
 
         quarantine_dir = Path(self.last_result.root) / "Duplicates_Quarantine"
-        plan = build_action_plan(self.last_result, keep_strategy="first", interactive_keep=False)
+        plan = build_action_plan(
+            self.last_result, keep_strategy="first", interactive_keep=False
+        )
         errs = delete_files(
             plan.to_act,
             mode="quarantine",
@@ -138,7 +165,9 @@ class App(tk.Tk):
         if errs:
             messagebox.showerror("Some operations failed", "\n".join(errs[:10]))
         else:
-            messagebox.showinfo("Done", f"Moved {len(plan.to_act)} file(s) into {quarantine_dir}")
+            messagebox.showinfo(
+                "Done", f"Moved {len(plan.to_act)} file(s) into {quarantine_dir}"
+            )
 
 
 def run_gui() -> None:

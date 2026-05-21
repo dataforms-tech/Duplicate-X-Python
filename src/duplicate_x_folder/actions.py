@@ -40,32 +40,59 @@ def choose_keep_file(
         for i, f in enumerate(files):
             print(f"  [{i}] {f.path} ({f.size} bytes)")
         while True:
-            raw = input("Choose index to KEEP (blank=0, 's' to skip group): ").strip().lower()
+            raw = (
+                input("Choose index to KEEP (blank=0, 's' to skip group): ")
+                .strip()
+                .lower()
+            )
             if raw == "":
-                return KeepChoice(group_id=group.group_id, keep_path=files[0].path, reason="interactive", selected_index=0)
+                return KeepChoice(
+                    group_id=group.group_id,
+                    keep_path=files[0].path,
+                    reason="interactive",
+                    selected_index=0,
+                )
             if raw == "s":
-                return KeepChoice(group_id=group.group_id, keep_path="", reason="skipped", selected_index=None)
+                return KeepChoice(
+                    group_id=group.group_id,
+                    keep_path="",
+                    reason="skipped",
+                    selected_index=None,
+                )
             try:
                 idx = int(raw)
             except ValueError:
                 print("Enter a number, blank, or 's'.")
                 continue
             if 0 <= idx < len(files):
-                return KeepChoice(group_id=group.group_id, keep_path=files[idx].path, reason="interactive", selected_index=idx)
+                return KeepChoice(
+                    group_id=group.group_id,
+                    keep_path=files[idx].path,
+                    reason="interactive",
+                    selected_index=idx,
+                )
             print("Index out of range.")
 
     if strategy == "first":
         chosen = min(files, key=lambda f: f.path)
-        return KeepChoice(group_id=group.group_id, keep_path=chosen.path, reason="first")
+        return KeepChoice(
+            group_id=group.group_id, keep_path=chosen.path, reason="first"
+        )
     if strategy == "newest":
         chosen = max(files, key=lambda f: f.mtime)
-        return KeepChoice(group_id=group.group_id, keep_path=chosen.path, reason="newest")
+        return KeepChoice(
+            group_id=group.group_id, keep_path=chosen.path, reason="newest"
+        )
     if strategy == "oldest":
         chosen = min(files, key=lambda f: f.mtime)
-        return KeepChoice(group_id=group.group_id, keep_path=chosen.path, reason="oldest")
+        return KeepChoice(
+            group_id=group.group_id, keep_path=chosen.path, reason="oldest"
+        )
     if strategy == "shortest-path":
         chosen = min(files, key=lambda f: (len(f.path), f.path))
-        return KeepChoice(group_id=group.group_id, keep_path=chosen.path, reason="shortest-path")
+        return KeepChoice(
+            group_id=group.group_id, keep_path=chosen.path, reason="shortest-path"
+        )
 
     raise ValueError(f"Unknown keep strategy: {strategy}")
 
@@ -93,11 +120,15 @@ def build_action_plan(
             gid = int(group_str)
             idx = int(idx_str)
         except ValueError as exc:
-            raise ValueError(f"Invalid --select value (expected group:index): {item}") from exc
+            raise ValueError(
+                f"Invalid --select value (expected group:index): {item}"
+            ) from exc
         select_map.setdefault(gid, []).append(idx)
 
     for group in result.duplicate_groups:
-        keep_choice = choose_keep_file(group, strategy=keep_strategy, interactive=interactive_keep)
+        keep_choice = choose_keep_file(
+            group, strategy=keep_strategy, interactive=interactive_keep
+        )
         keep[group.group_id] = keep_choice
 
         if keep_choice.reason == "skipped":
@@ -107,7 +138,9 @@ def build_action_plan(
             indices = select_map.get(group.group_id, [])
             for idx in indices:
                 if idx < 0 or idx >= len(group.files):
-                    raise ValueError(f"--select {group.group_id}:{idx} is out of range for that group")
+                    raise ValueError(
+                        f"--select {group.group_id}:{idx} is out of range for that group"
+                    )
                 p = Path(group.files[idx].path)
                 if p.resolve() == Path(keep_choice.keep_path).resolve():
                     continue
@@ -170,7 +203,9 @@ def delete_files(
                 try:
                     from send2trash import send2trash  # type: ignore
                 except Exception as exc:  # noqa: BLE001
-                    raise RuntimeError("Trash mode requires 'send2trash'. Install with: pip install '.[trash]'") from exc
+                    raise RuntimeError(
+                        "Trash mode requires 'send2trash'. Install with: pip install '.[trash]'"
+                    ) from exc
                 send2trash(str(path))
                 continue
 
@@ -181,7 +216,9 @@ def delete_files(
                 dest = quarantine_dir / path.name
                 if preserve_structure and root_for_structure is not None:
                     try:
-                        dest = quarantine_dir / path.resolve().relative_to(root_for_structure.resolve())
+                        dest = quarantine_dir / path.resolve().relative_to(
+                            root_for_structure.resolve()
+                        )
                     except Exception:  # noqa: BLE001
                         dest = quarantine_dir / path.name
                 dest.parent.mkdir(parents=True, exist_ok=True)
@@ -209,11 +246,16 @@ def merge_duplicates(
     merge_dir = merge_dir.resolve()
     merge_dir.mkdir(parents=True, exist_ok=True)
 
-    plan = build_action_plan(result, keep_strategy=keep_strategy, interactive_keep=interactive_keep)
+    plan = build_action_plan(
+        result, keep_strategy=keep_strategy, interactive_keep=interactive_keep
+    )
     if not plan.to_act:
         return []
 
-    confirm_or_raise(f"Move {len(plan.to_act)} duplicate file(s) into {merge_dir}?", assume_yes=assume_yes)
+    confirm_or_raise(
+        f"Move {len(plan.to_act)} duplicate file(s) into {merge_dir}?",
+        assume_yes=assume_yes,
+    )
 
     errors: List[str] = []
     for path in plan.to_act:
@@ -227,7 +269,9 @@ def merge_duplicates(
             if preserve_structure:
                 dest = merge_dir / rel  # type: ignore[arg-type]
             else:
-                dest = merge_dir / f"group_{_group_id_for_path(result, path)}" / path.name
+                dest = (
+                    merge_dir / f"group_{_group_id_for_path(result, path)}" / path.name
+                )
 
             dest.parent.mkdir(parents=True, exist_ok=True)
             dest = _unique_destination(dest)
