@@ -1,0 +1,26 @@
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+dist/
+build/
+.venv/
+venv/
+ENV/
+env/
+
+# OS / editors
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# App outputs
+duplicate_scan.json
+Duplicates_Merged/
+Duplicates_Quarantine/
