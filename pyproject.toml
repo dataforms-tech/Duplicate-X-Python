@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "duplicate-x-folder"
+version = "0.1.0"
+description = "Scan folders and find duplicate files by content."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Duplicate-X-Folder-Python contributors" }]
+dependencies = []
+
+[project.optional-dependencies]
+trash = ["send2trash>=1.8.3"]
+
+[project.scripts]
+duplicate-x = "duplicate_x_folder.cli:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
